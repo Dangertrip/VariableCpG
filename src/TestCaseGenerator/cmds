@@ -1,0 +1,8 @@
+ 1122  python bsseq_sim.py TestDataCase > TestData_50000_hg19.fastq &
+ 1123  history 2 >> cmds
+ 1006  bsmap -a TestData_50000_hg19.fastq -d /data/dsun/ref/humanigenome/hg19.fa -o TestData_50000_hg19.fastq.bam -S 123 -n 1 -r 0 1>>test.log 2>>test.err &
+ 1007  history 2 >> cmds
+ 1139  bamToBed -i TestData_50000_hg19.fastq.bam > TestData_50000_hg19.fastq.bed
+ 1146  bedtools sort -i TestData_50000_hg19.fastq.bed > TestData_50000_hg19.fastq.bed.sorted
+ 1147  bedtools intersect -wa -a /data/yyin/data/ref/cpg/hg19_cpg.bed -b TestData_50000_hg19.fastq.bed.sorted > hg19_mapped_cpg.bed &
+ 1148  history 10 >> cmds

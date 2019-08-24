@@ -1,0 +1,19 @@
+A.
+haplotype.py:  generate haplotype for every read
+python haplotype.py cpgfile bamfile
+
+B.
+(Optional: if samples are pairend) python pairend.py haplotype_file
+WARNING: 
+1. This step will generate 2 temp file for each process. It takes large portion of disk space.
+2. Please do not run this in parallel unless you have huge amount of memory.
+
+C.
+haplo_count.py: combine adjacent cpgs
+python haplo_count.py haplotype_file combine_num
+
+
+OKRs:
+1. Remodule all codes.
+2. Extract common functions into utils.py(use pysam!!)
+3. Perform unit test and end to end test.

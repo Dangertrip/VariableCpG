@@ -1,0 +1,10 @@
+[bsmap] @Fri Aug 23 01:36:48 2019 	loading reference file: hg19.fa
+failed to open reference file (check -d option): hg19.fa
+[bsmap] @Fri Aug 23 01:37:25 2019 	loading reference file: /data/dsun/ref/humanigenome/hg19.fa 	(format: FASTA)
+[bsmap] @Fri Aug 23 01:38:01 2019 	25 reference seqs loaded, total size 3095693983 bp. 36 secs passed
+[bsmap] @Fri Aug 23 01:40:20 2019 	create seed table. 175 secs passed
+[bsmap] @Fri Aug 23 01:40:20 2019 	Single-end alignment(8 threads),
+	Input read file: TestData_50000_hg19.fastq 	(format: FASTQ)
+	Output file: TestData_50000_hg19.fastq.bam	 (format: SAM, automatically convert to BAM)
+[bsmap] @Fri Aug 23 01:40:24 2019 	total reads: 50000 	total time:  179 secs
+	aligned reads: 43998 (88.0%), unique reads: 43998 (88.0%), suppressed non-unique reads: 2149 (4.3%)
