@@ -16,12 +16,12 @@ def load_cpg_index(cpg_file_path):
     with open(cpg_file_path) as f:
         for line in f:
             chrom, cpg_start, cpg_end = line.strip().split()[:3]
-            if chrom in dic:
+            if chrom in index:
                 index[chrom].append(int(cpg_start))
             else:
                 index[chrom]=[int(cpg_start)]
     
-    for chrom in dic:
+    for chrom in index:
         index[chrom].sort()
     return index
     
@@ -36,12 +36,12 @@ def get_certain_range_cpgs(cpg_starts_pos, cpg_list_chrom, start, end):
         end: int, read ending point.
     '''
     cpg_arr = []
-    for i in range(cpg_starting_pos, cpg_starting_pos+100):
+    for i in range(cpg_starts_pos, cpg_starts_pos+100):
         # need to test whether marginal cpg will be included(the first base and the last base)
-        if i==len(cpg_index[chrom]) or  cpg_index[chrom][i]>read_end:
+        if i==len(cpg_list_chrom) or  cpg_list_chrom[i]>end:
             break
-        num=cpg_index[chrom][i]
-        if num>=read_start and num<read_end:
+        num=cpg_list_chrom[i]
+        if num>=start and num<end:
             cpg_arr.append(num)
     return cpg_arr
 
@@ -66,11 +66,11 @@ def extract_cpgs_from_read(reads, read_start, cpg_list, strand_specific_table):
         cpg_in_reads=reads[relative_pos:relative_pos+2]
         if cpg_in_reads==strand_specific_table[0]:
             cpg_status=cpg_status+'C'
-            cpg_pos = cpg_pos+str(num)+','
+            cpg_pos = cpg_pos+str(cpg_pos)+','
         else:
             if cpg_in_reads==strand_specific_table[1]:
                 cpg_status=cpg_status+'T'
-                cpg_pos = cpg_pos+str(num)+','
+                cpg_pos = cpg_pos+str(cpg_pos)+','
                 #Position should be different in +/- strand for cpg. I will deal with this later.
             else:
                 #print(cpg_in_reads,strand_specific_table,num,s)
@@ -130,14 +130,14 @@ def get_haplotype(cpg_index, bam_file_path):
         
         if cpg_status:
 
-            duplicate_param = [chrom, str(read_start), str(red_end), cpg_status, strand, cpg_pos]
+            duplicate_param = [chrom, str(read_start), str(read_end), cpg_status, strand, cpg_pos]
             duplicate_marker = ''.join(duplicate_param)
             
             if duplicate_marker in dup_dic:
                 continue
             else:
                 dup_dic.add(duplicate_marker)
-                lastreads.append(dup_s)
+                lastreads.append(duplicate_marker)
                 if len(lastreads)>30:
                     remove_s = lastreads[0]
                     lastreads=lastreads[1:]
