@@ -17,3 +17,11 @@ OKRs:
 1. Remodule all codes.
 2. Extract common functions into utils.py(use pysam!!)
 3. Perform unit test and end to end test.
+4. Perform experiments:
+	a. distance(certain point, random points) ~ information_entropy(random points)
+	b. distance(random points, random points) ~ methylation_diff(random points, random points)
+	c. develop the method to subtract the influence of same status of target CpGs.
+	   For example: diff( CTC*8 , CCC*8) should be larger than diff( CTC*8, CTT*8 )
+	   target CpG is the CpG in the center of the tri-bases.
+	d. Introduce the influence by distance between tri-bases.
+

@@ -6,7 +6,6 @@ import os
 def search(s,arr):
     l=0
     r=len(arr)-1
-    #print(s,arr)
     while l<r:
         mid=(l+r)//2
         if arr[mid]<s:
@@ -14,29 +13,13 @@ def search(s,arr):
             continue
         if arr[mid]>=s:
             r = mid-1
-        #print(l,r)
     return (l+r)//2
 
 def main():
-    '''
-    target_flanking_len=80
-    rcTable={}
-    rcTable{'A'}='T'
-    rcTable{'T'}='A'
-    rcTable{'G'}='C'
-    rcTable{'C'}='G'
-    rcTable{'N'}='N'
-    rcTable{'R'}='Y'
-    rcTable{'Y'}='R'
-    rcTable{'M'}='K'
-    rcTable{'K'}='M'
-    rcTable{'S'}='S'
-    rcTable{'W'}='W'
-    '''
     strand_map={
             0:{'+':['CG','TG'],'-':['CG','CA']},
             1:{'-':['CG','TG'],'+':['CG','CA']}
-            }
+    }
     #'+'(++,+-) or '-'(-+,--) means strand, +CG,-CG means methylated +C/-C; +TG/-CA means unmethylated +C/-C
     #position of C in CG in different strand do not change! Because bsmap transfer all reads into ++ and __ which all 
     #in the + strand. 
