@@ -59,18 +59,18 @@ def extract_cpgs_from_read(reads, read_start, cpg_list, strand_specific_table):
     cpg_status=''
     cpg_pos=''
     seq_err=False
-    for cpg_pos in cpg_list: 
-        relative_pos = cpg_pos - read_start
+    for pos in cpg_list: 
+        relative_pos = pos - read_start
         if relative_pos<0 or relative_pos>len(reads): continue
         # This is about the marginal CpG processing. I should double check the marginal process in testing.
         cpg_in_reads=reads[relative_pos:relative_pos+2]
         if cpg_in_reads==strand_specific_table[0]:
             cpg_status=cpg_status+'C'
-            cpg_pos = cpg_pos+str(cpg_pos)+','
+            cpg_pos = cpg_pos+str(pos)+','
         else:
             if cpg_in_reads==strand_specific_table[1]:
                 cpg_status=cpg_status+'T'
-                cpg_pos = cpg_pos+str(cpg_pos)+','
+                cpg_pos = cpg_pos+str(pos)+','
                 #Position should be different in +/- strand for cpg. I will deal with this later.
             else:
                 #print(cpg_in_reads,strand_specific_table,num,s)
@@ -158,7 +158,7 @@ if __name__=="__main__":
     #print(search(10542,[10469, 10471, 1048 10489, 10493, 10497, 10525, 10542, 10563, 10571]))
     
     cpg_file_path = "/data/yyin/data/ref/cpg/hg19_cpg.bed"
-    bam_file_path = ""
+    bam_file_path = "TestCaseGenerator/TestData_50000_hg19.fastq.bam"
 
     cpg_index = load_cpg_index(cpg_file_path)
 
