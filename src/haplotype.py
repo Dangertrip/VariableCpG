@@ -2,20 +2,92 @@ import sys
 import subprocess
 import pysam
 import os
+from utils import binary_search
 
-def search(s,arr):
-    l=0
-    r=len(arr)-1
-    while l<r:
-        mid=(l+r)//2
-        if arr[mid]<s:
-            l = mid+1
-            continue
-        if arr[mid]>=s:
-            r = mid-1
-    return (l+r)//2
+def load_cpg_index(cpg_file_path):
+    '''
+    Generate cpg index.
+    Param:
+        cpg_file_path: string, file name of cpg bed file.
+    Return:
+        cpg_index: dicionary, {'chromsome_name(chr1)':[1,2,3(cpg_position)]}
+    '''
+    index = {}
+    with open(cpg_file_path) as f:
+        for line in f:
+            chrom, cpg_start, cpg_end = line.strip().split()[:3]
+            if chrom in dic:
+                index[chrom].append(int(cpg_start))
+            else:
+                index[chrom]=[int(cpg_start)]
+    
+    for chrom in dic:
+        index[chrom].sort()
+    return index
+    
 
-def main():
+def get_certain_range_cpgs(cpg_starts_pos, cpg_list_chrom, start, end):
+    '''
+    Get cpgs between start and end in certain chrom
+    Param:
+        cpg_starts_pos: int, Location(index) of starting cpg in cpg_list_chrom.
+        cpg_list_chrom: int[], cpg list of certain chrom. Numbers are the starting points of cpgs at that chromsome.
+        start: int, read starting point.
+        end: int, read ending point.
+    '''
+    cpg_arr = []
+    for i in range(cpg_starting_pos, cpg_starting_pos+100):
+        # need to test whether marginal cpg will be included(the first base and the last base)
+        if i==len(cpg_index[chrom]) or  cpg_index[chrom][i]>read_end:
+            break
+        num=cpg_index[chrom][i]
+        if num>=read_start and num<read_end:
+            cpg_arr.append(num)
+    return cpg_arr
+
+
+def extract_cpgs_from_read(reads, read_start, cpg_list, strand_specific_table):
+    '''
+    Extract all cpg status from one read.
+    Param:
+        reads: string, reads information: ATCGATGTCGTA......
+        read_start: int, read starting position.
+        cpg_list: int[], list of cpg site position on genome, only cpg on reads will be included.
+        strand_specific_table: string[], marker for deciding whether cpg_status should be C or T.
+
+    '''
+    cpg_status=''
+    cpg_pos=''
+    seq_err=False
+    for cpg_pos in cpg_list: 
+        relative_pos = cpg_pos - read_start
+        if relative_pos<0 or relative_pos>len(reads): continue
+        # This is about the marginal CpG processing. I should double check the marginal process in testing.
+        cpg_in_reads=reads[relative_pos:relative_pos+2]
+        if cpg_in_reads==strand_specific_table[0]:
+            cpg_status=cpg_status+'C'
+            cpg_pos = cpg_pos+str(num)+','
+        else:
+            if cpg_in_reads==strand_specific_table[1]:
+                cpg_status=cpg_status+'T'
+                cpg_pos = cpg_pos+str(num)+','
+                #Position should be different in +/- strand for cpg. I will deal with this later.
+            else:
+                #print(cpg_in_reads,strand_specific_table,num,s)
+                seq_err=True
+                break
+    return cpg_status, cpg_pos[:-1], seq_err # remove ',' from cpg_pos
+ 
+
+def get_haplotype(cpg_index, bam_file_path):
+    '''
+    Generate bam_file_path+'.status' as haplotype file.
+    Param:
+        cpg_index: cpg_index from load_cpg_index
+        bam_file_path: string, bam file path.
+    '''
+    
+    os.system('rm '+bam_file_path+'.status')
     strand_map={
             0:{'+':['CG','TG'],'-':['CG','CA']},
             1:{'-':['CG','TG'],'+':['CG','CA']}
@@ -25,108 +97,73 @@ def main():
     #in the + strand. 
 
 
-    cpgfile = sys.argv[1]
-    bamfile = sys.argv[2]
-    fn=bamfile
-    with open(cpgfile) as f:
-        lines = f.readlines()
-    dic={}
-    os.system('rm '+fn+'.status')
-    for line in lines:
-        chr,s,e = line.strip().split()[:3]
-        if chr in dic:
-            dic[chr].append(int(s))
-        else:
-            dic[chr]=[int(s)]
-    
-    for chr in dic:
-        dic[chr].sort()
-    
-
-    #finish build the binary look up table
-
-    f=pysam.AlignmentFile(fn, "r")
+    bam_file = pysam.AlignmentFile(bam_file_path, "r")
     result=[]
     lastreads=[]
     dup_dic=set()
-    for line in f:
-        temp = line.to_string().strip().split()
-        name = temp[0]
-        flag = int((int(temp[1])&(0x10))>0)
-        chr = temp[2]
-        if chr=='chrM':
-            continue
-        s = int(temp[3])
-        reads = temp[9]
-        qua = temp[10]
-        mismatch = temp[11][temp[11].rfind(':'):]
-        strand = temp[12][-2:]
+
+    for line in bam_file:
+        bam_line = line.to_string().strip().split()
+        name = bam_line[0]
+        reverse_flag = int((int(bam_line[1])&(0x10))>0) # 0x10 SEQ being reverse complemented. 
+        chrom = bam_line[2]
+        read_start = int(bam_line[3])
+        reads = bam_line[9]
+        read_end = read_start+len(reads)
+        quality = bam_line[10]
+        mismatch = bam_line[11][bam_line[11].rfind(':'):]
+        strand = bam_line[12][-2:]
+
+        # We don't use chrM reads or reads in undifined chromsome in our haplotype analysis pipeline.
+        if chrom == 'chrM' or chrom not in cpg_index: continue
         if strand[0]!='+' and strand[0]!='-' or strand[1]!='+' and strand[1]!='-':
-            strand = temp[13][-2:]
-        if not chr in dic: continue
-        pos=search(int(s),dic[chr])
-        e = s+len(reads)
-        cpg_arr=[]
-        for i in range(pos,pos+100):
-            if i==len(dic[chr]) or  dic[chr][i]>e:
-                break
-            num=dic[chr][i]
-            if num>=s and num<e:
-                cpg_arr.append(num)
-        #print(cpg_arr)
-        #print(s)
-        #print(reads)
-        cpg_status=''
-        containc=0
-        containt=0
-        cpg_pos=''
-        #Here's a new method about strand specific haplotype
-        strand_specific_table = strand_map[flag][strand[1]]
-        seq_err=False
-        for num in cpg_arr: 
-            if num-s+1>=len(reads) or num-s<=1:
-                continue
-            cpg_in_reads=reads[num-s:num-s+2]
-            if cpg_in_reads==strand_specific_table[0]:
-                cpg_status=cpg_status+'C'
-                cpg_pos = cpg_pos+str(num)+','
-                containc=1
-            else:
-                if cpg_in_reads==strand_specific_table[1]:
-                    cpg_status=cpg_status+'T'
-                    cpg_pos = cpg_pos+str(num)+','
-                    containt=1
-                    #Position should be different in +/- strand for cpg. I will deal with this later.
-                else:
-                    #print(cpg_in_reads,strand_specific_table,num,s)
-                    seq_err=True
-                    break
-        #print(cpg_status,seq_err)
-        #print(temp,flag)
-        if seq_err:
-            continue
+            strand = bam_line[13][-2:]
+
+        cpg_starting_pos = binary_search(read_start,cpg_index[chrom])
+
+        cpg_list = get_certain_range_cpgs(cpg_starting_pos, cpg_index[chrom], read_start, read_end)
+
+        strand_specific_table = strand_map[reverse_flag][strand[1]]
+        cpg_status, cpg_pos, seq_err = extract_cpgs_from_read(reads, read_start, cpg_list, strand_specific_table)
+        
+        if seq_err: continue
+        
         if cpg_status:
-            dup_s=chr+str(s)+str(e-1)+cpg_status+strand+cpg_pos[:-1]
-            if dup_s in dup_dic:
+
+            duplicate_param = [chrom, str(read_start), str(red_end), cpg_status, strand, cpg_pos]
+            duplicate_marker = ''.join(duplicate_param)
+            
+            if duplicate_marker in dup_dic:
                 continue
             else:
-                dup_dic.add(chr+str(s)+str(e-1)+cpg_status+strand+cpg_pos[:-1])
+                dup_dic.add(duplicate_marker)
                 lastreads.append(dup_s)
                 if len(lastreads)>30:
                     remove_s = lastreads[0]
                     lastreads=lastreads[1:]
                     dup_dic.remove(remove_s)
-            result.append(chr+'\t'+str(s)+'\t'+str(e-1)+'\t'+name+'\t'+cpg_status+'\t'+strand+'\t'+cpg_pos[:-1]+'\t'+str(flag)+'\t'+mismatch+'\n')
+            output_param = [chrom, str(read_start), str(read_end), cpg_status, strand, cpg_pos, str(reverse_flag), mismatch]
+            output_str = '\t'.join(output_param) + '\n'
+            result.append(output_str)
             if len(result)>100000:
-                with open(fn+'.status','a') as ff:
+                with open(bam_file_path+'.status','a') as ff:
                     ff.writelines(result)
                 result=[]
-    f.close()
-    with open(fn+'.status','a') as ff:
+    bam_file.close()
+    with open(bam_file_path+'.status','a') as ff:
         ff.writelines(result)
-        #print(fn,sum,mix,mix/sum)
 
 
 if __name__=="__main__":
-    #print(search(10542,[10469, 10471, 10484, 10489, 10493, 10497, 10525, 10542, 10563, 10571]))
-    main()
+    #print(search(10542,[10469, 10471, 1048 10489, 10493, 10497, 10525, 10542, 10563, 10571]))
+    
+    cpg_file_path = "/data/yyin/data/ref/cpg/hg19_cpg.bed"
+    bam_file_path = ""
+
+    cpg_index = load_cpg_index(cpg_file_path)
+
+    #finish build the binary look up table
+
+    get_haplotype(cpg_index, bam_file_path)
+
+
