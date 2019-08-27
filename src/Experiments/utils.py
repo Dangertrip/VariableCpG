@@ -39,6 +39,21 @@ def information_entropy(v):
     return -1*np.sum(v*np.log(v, where=v>0))
 
 
+def methy_entropy(v):
+    ratio = target_CpG_methy_ratio(v)
+    return -1*(ratio*np.log(ratio)+(1-ratio)*np.log(1-ratio))
+
+
+def mas(v):
+    return (information_entropy(v)+1)**methy_entropy(v)
+
+
+def conditional_information_entropy(v):
+    pass
+    # methy_ratio  = target_CpG_methy_ratio(v) + 1e-10
+    # entropy = v[0]*np.log(v[0]/methy_ratio)
+
+
 if __name__=="__main__":
     testcases = [[0.125,0.125,0.125,0.125,0.125,0.125,0.125,0.125],
                  [0,0,0,0,0,0,0,1],
