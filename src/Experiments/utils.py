@@ -41,6 +41,7 @@ def information_entropy(v):
 
 def methy_entropy(v):
     ratio = target_CpG_methy_ratio(v)
+    if ratio<0.0001 or ratio>0.9999: return 0
     return -1*(ratio*np.log(ratio)+(1-ratio)*np.log(1-ratio))
 
 
