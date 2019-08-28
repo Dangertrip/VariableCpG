@@ -1,5 +1,9 @@
 import numpy as np
 
+def fixed_vector_generator():
+    pass
+
+
 def vector_generator():
     sec = np.random.random_sample((7,))
     sec = np.sort(sec)
