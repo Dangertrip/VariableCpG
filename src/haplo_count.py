@@ -19,8 +19,8 @@ def main():
     with open(haplofile) as f:
         for line in f:
             temp = line.strip().split()
-            cpg = temp[4]
-            pos = temp[6].split(',')
+            cpg = temp[3]
+            pos = temp[5].split(',')
             chr = temp[0]
             if len(cpg)<lookup_num:
                 continue
