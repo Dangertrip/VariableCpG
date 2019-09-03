@@ -130,7 +130,7 @@ def get_haplotype(cpg_index, bam_file_path):
         
         if cpg_status:
 
-            duplicate_param = [chrom, str(read_start), str(read_end), cpg_status, strand, cpg_pos]
+            duplicate_param = [chrom, str(read_start), str(read_end), cpg_status, strand, cpg_pos,reads]
             duplicate_marker = ''.join(duplicate_param)
             
             if duplicate_marker in dup_dic:
@@ -142,7 +142,7 @@ def get_haplotype(cpg_index, bam_file_path):
                     remove_s = lastreads[0]
                     lastreads=lastreads[1:]
                     dup_dic.remove(remove_s)
-            output_param = [chrom, str(read_start), str(read_end), cpg_status, strand, reads, str(reverse_flag), mismatch]
+            output_param = [chrom, str(read_start), str(read_end), cpg_status, strand, cpg_pos, str(reverse_flag), mismatch]
             output_str = '\t'.join(output_param) + '\n'
             result.append(output_str)
             if len(result)>100000:
@@ -156,8 +156,10 @@ def get_haplotype(cpg_index, bam_file_path):
 
 if __name__=="__main__":
     #print(search(10542,[10469, 10471, 1048 10489, 10493, 10497, 10525, 10542, 10563, 10571]))
-    
-    cpg_file_path = "/data/yyin/data/ref/cpg/hg19_cpg.bed"
+    if len(sys.argv)<3:
+        cpg_file_path = "/data/yyin/data/ref/cpg/hg19_cpg.bed"
+    else:
+        cpg_file_path = sys.argv[2]
     bam_file_path = sys.argv[1]
 
     cpg_index = load_cpg_index(cpg_file_path)
