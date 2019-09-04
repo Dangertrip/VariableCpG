@@ -1,6 +1,28 @@
 import sys
 import numpy as np
 
+def connectivity(start,v):
+    transfer_path = [[0,1,2,4],
+                     [0,1,3,5],
+                     [0,2,3,6],
+                     [1,2,3,7],
+                     [0,4,5,6],
+                     [1,4,5,7],
+                     [2,4,6,7],
+                     [3,5,6,7]]
+    queue = [start]
+    while len(queue)>0:
+        node = queue[0].pop(0)
+        for num in transfer_path[node]:
+            if v[num]>0:
+                queue.append(num)
+                v[num]=0
+    if np.sum(v)==0:
+        return True
+    else:
+        return False
+
+
 def read_file(name):
     with open(name) as f:
         lines = f.readlines()
