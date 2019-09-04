@@ -5,6 +5,7 @@ from plot_utils import scatter_plot, scatter_plot_3d
 from methyratio_entropy import methyratio_entropy
 from methyratio_infoentropy_times_methentropy import methyratio_infoentropy_times_methentropy
 from methyratio_dist_times_mas import methyratio_dist_times_mas
+from graph_distance import graph_dist_vs_methy_ratio
 
 if __name__=='__main__':
     # distance(certain point, random points) vs information entropy
@@ -21,9 +22,12 @@ if __name__=='__main__':
     # x,y = methyratio_entropy(200000)
     # scatter_plot(x, y, {'figure_name':'methyratio_vs_methyentropy.png'})
 
-    x,y = methyratio_infoentropy_times_methentropy(500000)
-    scatter_plot(x, y, {'figure_name':'methyratio_infoentropy_times_methentropy.png'})
+    # x,y = methyratio_infoentropy_times_methentropy(500000)
+    # scatter_plot(x, y, {'figure_name':'methyratio_infoentropy_times_methentropy.png'})
     
     # x,y,z = methyratio_dist_times_mas(50000)
     # scatter_plot_3d(x, y, z, {'figure_name':'methyratio_dist.png'})
+
+    x,y = graph_dist_vs_methy_ratio(10000)
+    scatter_plot(x, y, {'figure_name':'graph_dist_vs_methy.png'})
 
